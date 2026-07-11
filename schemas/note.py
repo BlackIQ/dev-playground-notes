@@ -1,8 +1,10 @@
-# BaseSchema
 # Typing
 from typing import Optional
 
+# BaseSchema
 from database.base import BaseSchema
+# Enums
+from enums import OrderEnum, NoteSortEnum
 
 
 # Note Schema
@@ -24,16 +26,5 @@ class NoteQuery(BaseSchema):
     is_pinned: Optional[bool] = None
     is_archived: Optional[bool] = None
 
-    sort: Optional[str] = None
-    order: Optional[str] = "desc"
-
-    page: int = 1
-    limit: int = 20
-
-
-# Pagination
-class NotesPaginated(BaseSchema):
-    items: list[NoteRead]
-    page: int
-    limit: int
-    total: int
+    sort: NoteSortEnum = NoteSortEnum.ID
+    order: OrderEnum = OrderEnum.DESC
