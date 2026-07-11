@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from dependencies import get_db
 # Note Model and Note Schema
 from models.note import NoteModel
-from schemas.note import Note, NoteRead, NoteQuery
+from schemas.note import Note, NoteRead, NoteQuery, NotesPaginated
 
 # Router
 router = APIRouter(
@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[NoteRead])
+@router.get("", response_model=NotesPaginated)
 async def all_notes(query: NoteQuery = Depends(), db: Session = Depends(get_db)):
     notes = db.query(NoteModel)
 
@@ -37,7 +37,14 @@ async def all_notes(query: NoteQuery = Depends(), db: Session = Depends(get_db))
     offset = (query.page - 1) * query.limit
     limit = query.limit
 
-    return notes.offset(offset).limit(limit).all()
+    total = db.query(NoteModel).count()
+
+    return {
+        "total": total,
+        "page": query.page,
+        "limit": limit,
+        "items": notes.offset(offset).limit(limit).all()
+    }
 
 
 @router.get("/{note_id}", response_model=NoteRead)
