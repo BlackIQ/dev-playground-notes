@@ -71,7 +71,7 @@ async def get_note(note_id: int, db: Session = Depends(get_db)):
     item = db.get(NoteModel, note_id)
 
     if not item:
-        raise HTTPException(status_code=404, detail="Note note found")
+        raise HTTPException(status_code=404, detail="Note not found")
 
     return item
 
