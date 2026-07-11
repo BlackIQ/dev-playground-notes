@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from dependencies import get_db
 # Note Model and Note Schema
 from models.note import NoteModel
-from schemas.note import Note, NoteRead
+from schemas.note import Note, NoteRead, NoteQuery
 
 # Router
 router = APIRouter(
@@ -15,13 +15,31 @@ router = APIRouter(
 )
 
 
-# Get all notes
 @router.get("", response_model=list[NoteRead])
-async def all_notes(db: Session = Depends(get_db)):
-    return db.query(NoteModel).all()
+async def all_notes(query: NoteQuery = Depends(), db: Session = Depends(get_db)):
+    notes = db.query(NoteModel)
+
+    if query.q:
+        notes = notes.filter(
+            NoteModel.title.contains(query.q) | NoteModel.content.contains(query.q)
+        )
+
+    if query.is_pinned is not None:
+        notes = notes.filter(
+            NoteModel.is_pinned == query.is_pinned
+        )
+
+    if query.is_archived is not None:
+        notes = notes.filter(
+            NoteModel.is_archived == query.is_archived
+        )
+
+    offset = (query.page - 1) * query.limit
+    limit = query.limit
+
+    return notes.offset(offset).limit(limit).all()
 
 
-# Get one note
 @router.get("/{note_id}", response_model=NoteRead)
 async def get_note(note_id: int, db: Session = Depends(get_db)):
     item = db.get(NoteModel, note_id)
@@ -32,7 +50,6 @@ async def get_note(note_id: int, db: Session = Depends(get_db)):
     return item
 
 
-# Create note
 @router.post("", response_model=NoteRead, status_code=status.HTTP_201_CREATED)
 async def create_note(note: Note, db: Session = Depends(get_db)):
     db_item = NoteModel(**note.model_dump())
@@ -43,7 +60,6 @@ async def create_note(note: Note, db: Session = Depends(get_db)):
     return db_item
 
 
-# Update note
 @router.put("/{note_id}", response_model=NoteRead)
 async def update_note(note_id: int, note: Note, db: Session = Depends(get_db)):
     item = db.get(NoteModel, note_id)
@@ -60,7 +76,6 @@ async def update_note(note_id: int, note: Note, db: Session = Depends(get_db)):
     return item
 
 
-# Delete note
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_note(note_id: int, db: Session = Depends(get_db)):
     item = db.get(NoteModel, note_id)
@@ -74,3 +89,5 @@ async def delete_note(note_id: int, db: Session = Depends(get_db)):
     return None
 
 # Search
+
+# Pagination
