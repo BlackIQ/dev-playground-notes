@@ -29,3 +29,11 @@ class NoteQuery(BaseSchema):
 
     page: int = 1
     limit: int = 20
+
+
+# Pagination
+class NotesPaginated(BaseSchema):
+    items: list[NoteRead]
+    page: int
+    limit: int
+    total: int
