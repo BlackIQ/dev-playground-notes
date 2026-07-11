@@ -61,7 +61,7 @@ async def update_note(note_id: int, note: Note, db: Session = Depends(get_db)):
 
 
 # Delete note
-@router.delete("/{note_id}", response_model=NoteRead, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_note(note_id: int, db: Session = Depends(get_db)):
     item = db.get(NoteModel, note_id)
 
