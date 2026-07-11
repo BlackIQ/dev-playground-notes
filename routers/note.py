@@ -1,12 +1,15 @@
 # FastAPI & SQLAlchemy
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 # Dependencies
 from dependencies import get_db
+# Enums
+from enums import NoteSortEnum, OrderEnum
 # Note Model and Note Schema
 from models.note import NoteModel
-from schemas.note import Note, NoteRead, NoteQuery, NotesPaginated
+from schemas.note import Note, NoteRead, NoteQuery
 
 # Router
 router = APIRouter(
@@ -14,37 +17,53 @@ router = APIRouter(
     tags=["Note"]
 )
 
+SORT_COLUMNS = {
+    NoteSortEnum.ID: NoteModel.id,
+    NoteSortEnum.TITLE: NoteModel.title,
+    NoteSortEnum.CONTENT: NoteModel.content,
+}
 
-@router.get("", response_model=NotesPaginated)
+FILTER_COLUMNS = {
+    "is_pinned": NoteModel.is_pinned,
+    "is_archived": NoteModel.is_archived,
+}
+
+SEARCH_COLUMNS = [
+    NoteModel.title,
+    NoteModel.content,
+]
+
+
+@router.get("", response_model=list[NoteRead])
 async def all_notes(query: NoteQuery = Depends(), db: Session = Depends(get_db)):
     notes = db.query(NoteModel)
 
+    # Search
     if query.q:
         notes = notes.filter(
-            NoteModel.title.contains(query.q) | NoteModel.content.contains(query.q)
+            or_(*[
+                column.ilike(f"%{query.q}%")
+                for column in SEARCH_COLUMNS
+            ])
         )
 
-    if query.is_pinned is not None:
-        notes = notes.filter(
-            NoteModel.is_pinned == query.is_pinned
-        )
+    # Filter
+    for field, column in FILTER_COLUMNS.items():
+        value = getattr(query, field, None)
 
-    if query.is_archived is not None:
-        notes = notes.filter(
-            NoteModel.is_archived == query.is_archived
-        )
+        if value is not None:
+            notes = notes.filter(column == value)
 
-    offset = (query.page - 1) * query.limit
-    limit = query.limit
+    # Sort
+    sort_column = SORT_COLUMNS[query.sort]
 
-    total = db.query(NoteModel).count()
+    notes = notes.order_by(
+        sort_column.asc()
+        if query.order == OrderEnum.ASC
+        else sort_column.desc()
+    )
 
-    return {
-        "total": total,
-        "page": query.page,
-        "limit": limit,
-        "items": notes.offset(offset).limit(limit).all()
-    }
+    return notes.all()
 
 
 @router.get("/{note_id}", response_model=NoteRead)
@@ -94,7 +113,3 @@ async def delete_note(note_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return None
-
-# Search
-
-# Pagination
