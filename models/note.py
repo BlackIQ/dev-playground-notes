@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
 # BaseModel & Mixins
-from database import Base
+from database.base import Base
 
 
 # Note Model
