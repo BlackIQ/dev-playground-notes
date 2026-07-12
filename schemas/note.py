@@ -1,3 +1,5 @@
+# Datetime
+from datetime import datetime
 # Typing
 from typing import Optional
 
@@ -17,6 +19,8 @@ class Note(BaseSchema):
 
 class NoteRead(Note):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
 
 # Query String Schema
