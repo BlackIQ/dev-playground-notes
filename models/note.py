@@ -1,16 +1,29 @@
-# SQLAlchemy DataTypes
-from sqlalchemy import Column, Integer, String, Boolean
+# SQLAlchemy ORM
+from sqlalchemy.orm import Mapped, mapped_column
 
-# BaseModel
-from database.base import Base
+# BaseModel & Mixins
+from database import Base
 
 
 # Note Model
 class NoteModel(Base):
     __tablename__ = "notes"
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    content = Column(String, nullable=False)
-    is_pinned = Column(Boolean, nullable=False)
-    is_archived = Column(Boolean, nullable=False)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+    title: Mapped[str] = mapped_column(
+        nullable=False
+    )
+    content: Mapped[str] = mapped_column(
+        nullable=False
+    )
+    is_pinned: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False
+    )
+    is_archived: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False
+    )
