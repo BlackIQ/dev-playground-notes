@@ -1,3 +1,6 @@
+# Datetime
+from datetime import datetime, timezone
+
 # FastAPI & SQLAlchemy
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_
@@ -36,7 +39,7 @@ SEARCH_COLUMNS = [
 
 @router.get("", response_model=list[NoteRead])
 async def all_notes(query: NoteQuery = Depends(), db: Session = Depends(get_db)):
-    notes = db.query(NoteModel)
+    notes = db.query(NoteModel).filter(NoteModel.active())
 
     # Search
     if query.q:
@@ -109,7 +112,20 @@ async def delete_note(note_id: int, db: Session = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Note not found")
 
-    db.delete(item)
+    item.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return None
+
+
+@router.post("/{note_id}/restore", status_code=status.HTTP_204_NO_CONTENT)
+async def restore_note(note_id: int, db: Session = Depends(get_db)):
+    item = db.get(NoteModel, note_id)
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    item.deleted_at = None
     db.commit()
 
     return None
