@@ -1,10 +1,14 @@
-# SQLAlchemy & Pydantic
+# Pydantic
 from pydantic import BaseModel, ConfigDict
+# SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+
+# Mixins
+from database.mixins import TimestampMixin, SoftDeleteMixin
 
 
 # Base class for all SQLAlchemy models
-class Base(DeclarativeBase):
+class Base(TimestampMixin, SoftDeleteMixin, DeclarativeBase):
     pass
 
 
